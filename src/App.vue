@@ -1,132 +1,206 @@
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 font-sans">
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 w-full max-w-md">
-      <h1 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">
-        SolarCharge Status & Kontroll
-      </h1>
-
-      <div v-if="loading && !statusData" class="text-center text-gray-500 dark:text-gray-400">
-        Laddar data...
-      </div>
-      <div v-if="error" class="text-center text-red-500 dark:text-red-400 p-3 bg-red-100 dark:bg-red-900 rounded mb-4">
-        {{ error }}
-      </div>
-      <div v-if="controlError" class="text-center text-orange-500 dark:text-orange-400 p-3 bg-orange-100 dark:bg-orange-900 rounded mb-4">
-        Fel vid uppdatering av inställning: {{ controlError }}
+  <div class="min-h-screen bg-gray-800 text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
+    <div class="w-full max-w-sm">
+      <div
+        :class="topStatusBackgroundClass"
+        class="rounded-lg p-4 mb-6 flex items-center justify-center space-x-3 shadow-lg"
+      >
+        <component :is="topStatusIcon" class="h-8 w-8 text-white" />
+        <span class="text-2xl font-bold text-white">{{ topStatusText }}</span>
       </div>
 
-      <div v-if="statusData" class="space-y-3 mb-6">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Nät (P_han):</span>
-          <span class="text-gray-900 dark:text-gray-100">{{ formatWatts(statusData.net_power_w) }}</span>
-
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Potentiell Effekt:</span>
-          <span class="text-gray-900 dark:text-gray-100">{{ formatWatts(statusData.limited_instant_target_power_w) }}</span>
-
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Laddeffekt:</span>
-          <span class="text-gray-900 dark:text-gray-100">{{ formatWatts(statusData.charge_power_w_calculated) }}</span>
-
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Wallbox Status:</span>
-          <span :class="statusColor(statusData.wallbox_status)" class="px-2 py-0.5 rounded text-sm inline-block">
-            {{ statusData.wallbox_status || '--' }}
-          </span>
-
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Satt ström:</span>
-          <span class="text-gray-900 dark:text-gray-100">{{ formatAmps(statusData.estimated_set_amps) }}</span>
-
-          <span class="font-semibold text-gray-600 dark:text-gray-300 text-right">Beslut:</span>
-          <span class="text-gray-900 dark:text-gray-100">{{ formatDecision(statusData.decision_amps, statusData.hysteresis_pending_amps) }}</span>
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Nät</div>
+          <div class="text-xl font-semibold">{{ formatWatts(statusData?.net_power_w) }}</div>
         </div>
-        <div class="text-center text-xs text-gray-400 dark:text-gray-500 pt-2">
-          Senast uppdaterad: {{ formatTimestamp(statusData.timestamp) }}
+
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.05 2.05A1 1 0 006.5 19h6a1 1 0 00.95-.684l2.05-2.05A1 1 0 0016.5 16H13z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2.586a1 1 0 01.707.293l1.414 1.414a1 1 0 01.293.707V16H17" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Laddning</div>
+          <div class="text-xl font-semibold">{{ formatWatts(statusData?.charge_power_w_calculated) }}</div>
+        </div>
+
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Överskott</div>
+          <div class="text-xl font-semibold">{{ formatWatts(calculatedSurplus) }}</div>
         </div>
       </div>
 
-       <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 text-center mb-3">Inställningar</h2>
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 16v-2m8-8h-2M4 12H2m16.938-4.938l-1.414-1.414M5.482 5.482L4.068 4.068m13.876 13.876l-1.414-1.414M5.482 18.518l-1.414 1.414M12 18a6 6 0 100-12 6 6 0 000 12zm0 0v1a1 1 0 001-1h-1z" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Satt Ström</div>
+          <div class="text-xl font-semibold">{{ formatAmps(statusData?.estimated_set_amps) }}</div>
+        </div>
 
-        <div class="flex items-center justify-between">
-          <label for="optimizerSwitch" class="font-medium text-gray-700 dark:text-gray-300">Optimering Aktiv:</label>
-          <button
-            id="optimizerSwitch"
-            @click="toggleOptimizer"
-            :class="optimizerEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'"
-            class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            role="switch"
-            :aria-checked="optimizerEnabled.toString()"
-            :disabled="isUpdatingControl"
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.755 4 3.92C16 12.802 14.91 14 12.106 14c-.707 0-1.407-.246-2.01-.668-1.172-.796-2.01-2.018-2.01-3.332 0-.153.01-.303.028-.45z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 11.5c0 1.746 1.343 3.125 3 3.125S10.5 13.246 10.5 11.5c0-1.746-1.343-3.125-3-3.125S4.5 9.754 4.5 11.5zM19.5 11.5c0 1.746-1.343 3.125-3 3.125s-3-1.379-3-3.125c0-1.746 1.343-3.125 3-3.125s3 1.379 3 3.125z" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Beslut</div>
+          <div class="text-xl font-semibold">{{ formatDecision(statusData?.decision_amps, statusData?.hysteresis_pending_amps) }}</div>
+        </div>
+      </div>
+
+
+      <div class="bg-gray-700 p-4 rounded-lg shadow-md">
+        <h2 class="text-lg font-semibold text-center mb-4">Inställningar</h2>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <label for="optimizerSwitch" class="font-medium">Optimering Aktiv:</label>
+            <button
+              id="optimizerSwitch"
+              @click="toggleOptimizer"
+              :class="optimizerEnabled ? 'bg-green-500' : 'bg-gray-500'"
+              class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500"
+              role="switch"
+              :aria-checked="optimizerEnabled.toString()"
+              :disabled="isUpdatingControl"
             >
-            <span class="sr-only">Aktivera/Inaktivera Optimering</span>
-            <span
-              :class="optimizerEnabled ? 'translate-x-6' : 'translate-x-1'"
-              class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+              <span class="sr-only">Aktivera/Inaktivera Optimering</span>
+              <span
+                :class="optimizerEnabled ? 'translate-x-6' : 'translate-x-1'"
+                class="inline-block w-4 h-4 transform bg-white rounded-full transition-transform"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
 
-         <div class="flex items-center justify-between">
-          <label for="minAmpsSelect" class="font-medium text-gray-700 dark:text-gray-300">Lägsta Laddström:</label>
-          <select
-            id="minAmpsSelect"
-            v-model="selectedMinAmps"
-            @change="handleMinAmpsChange"
-            :disabled="isUpdatingControl"
-            class="block w-24 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 p-1"
-          >
-            <option v-for="amp in ampOptions" :key="amp" :value="amp">
-              {{ `${amp} A` }}
-            </option>
-          </select>
+          <div class="flex items-center justify-between">
+            <label for="minAmpsSelect" class="font-medium">Lägsta Laddström:</label>
+            <select
+              id="minAmpsSelect"
+              v-model="selectedMinAmps"
+              @change="handleMinAmpsChange"
+              :disabled="isUpdatingControl"
+              class="block w-24 rounded-md border-gray-500 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50 bg-gray-600 text-gray-100 p-1.5 text-sm"
+            >
+              <option v-for="amp in ampOptions" :key="amp" :value="amp">
+                {{ `${amp} A` }}
+              </option>
+            </select>
+          </div>
         </div>
-         <div v-if="isUpdatingControl" class="text-center text-sm text-gray-500 dark:text-gray-400">
-            Uppdaterar inställning...
-         </div>
       </div>
 
+      <div v-if="loading && !statusData" class="text-center text-gray-400 mt-4">Laddar data...</div>
+      <div v-if="error" class="text-center text-red-400 mt-4 p-2 bg-red-900 bg-opacity-50 rounded">{{ error }}</div>
+      <div v-if="controlError" class="text-center text-orange-400 mt-4 p-2 bg-orange-900 bg-opacity-50 rounded">{{ controlError }}</div>
+      <div v-if="isUpdatingControl" class="text-center text-sm text-gray-400 mt-2">Uppdaterar inställning...</div>
 
-      <div v-if="!statusData && !loading && !error" class="text-center text-gray-500 dark:text-gray-400 mt-4">
-        Ingen data tillgänglig.
+      <div v-if="statusData" class="text-center text-xs text-gray-500 mt-6">
+        Senast uppdaterad: {{ formatTimestamp(statusData.timestamp) }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 
-// --- Reactive State ---
+// --- Reaktiva variabler ---
 const statusData = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const controlError = ref(null);
 const pollingInterval = ref(null);
 const isUpdatingControl = ref(false);
-
-// --- Control State ---
 const optimizerEnabled = ref(true);
 const selectedMinAmps = ref(0);
 
-// --- API Configuration ---
-const API_BASE_URL = 'http://192.168.87.53:8000'; // Använd din PC's IP
+// --- API Konfiguration ---
+const API_BASE_URL = 'http://192.168.87.53:8000'; // ANVÄND DIN DATORS IP
 const STATUS_API_URL = `${API_BASE_URL}/api/v1/status`;
 const CONTROL_API_URL = `${API_BASE_URL}/api/v1/control`;
 
-// --- Options for Dropdown (JUSTERAD) ---
+// --- Beräknade Värden ---
+const calculatedSurplus = computed(() => {
+  if (statusData.value?.net_power_w !== undefined && statusData.value.net_power_w < 0) {
+    return -statusData.value.net_power_w; // Exporterar, så positivt överskott
+  }
+  return 0; // Importerar eller noll, så inget överskott
+});
+
+const topStatusText = computed(() => {
+  if (!statusData.value || !statusData.value.wallbox_status) return 'OKÄND';
+  const wbStatus = statusData.value.wallbox_status.toLowerCase();
+  if (wbStatus.includes('charging')) return 'LADDAR';
+  if (wbStatus.includes('paused')) return 'PAUSAD';
+  if (wbStatus.includes('waiting')) return 'VÄNTAR';
+  if (wbStatus.includes('ready')) return 'REDO';
+  if (wbStatus.includes('connected') && !wbStatus.includes('charging')) return 'ANSLUTEN';
+  if (wbStatus.includes('error')) return 'FEL';
+  return statusData.value.wallbox_status.toUpperCase();
+});
+
+const topStatusBackgroundClass = computed(() => {
+  if (!statusData.value || !statusData.value.wallbox_status) return 'bg-gray-600';
+  const wbStatus = statusData.value.wallbox_status.toLowerCase();
+  if (wbStatus.includes('charging')) return 'bg-green-500';
+  if (wbStatus.includes('paused')) return 'bg-yellow-500';
+  if (wbStatus.includes('waiting') || wbStatus.includes('ready') || wbStatus.includes('connected')) return 'bg-blue-500';
+  if (wbStatus.includes('error')) return 'bg-red-500';
+  return 'bg-gray-600';
+});
+
+// --- Ikoner (enkla SVG:er) ---
+const PlugIcon = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.472-2.472a3.375 3.375 0 000-4.773L6.263 3.263a3.375 3.375 0 00-4.774 0L1.39 3.375a3.375 3.375 0 000 4.774l2.472 2.472M6.263 3.263l4.748 4.748" /></svg>`
+};
+const PauseIcon = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>`
+};
+const HourglassIcon = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l-2.4-4.5m2.4 4.5l-2.4 4.5M6 12c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M6 12l2.4-4.5m-2.4 4.5l2.4 4.5m12-3H4.5" /></svg>`
+};
+const ErrorIcon = {
+  template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`
+};
+
+const topStatusIcon = computed(() => {
+  if (!statusData.value || !statusData.value.wallbox_status) return HourglassIcon;
+  const wbStatus = statusData.value.wallbox_status.toLowerCase();
+  if (wbStatus.includes('charging')) return PlugIcon;
+  if (wbStatus.includes('paused')) return PauseIcon;
+  if (wbStatus.includes('error')) return ErrorIcon;
+  return HourglassIcon;
+});
+
 const ampOptions = computed(() => {
-  // Generera array [0, 6, 7, 8, ..., 16]
-  // Antaganden: Min laddström = 6A, Max laddström = 16A. Justera vid behov.
   const minChargeableAmps = 6;
   const maxChargeableAmps = 16;
-  const options = [0]; // Starta med 0
+  const options = [0];
   for (let i = minChargeableAmps; i <= maxChargeableAmps; i++) {
     options.push(i);
   }
   return options;
 });
 
-// --- Fetch Status Data Function ---
 const fetchData = async () => {
   if (!statusData.value) { loading.value = true; }
   error.value = null;
@@ -135,7 +209,6 @@ const fetchData = async () => {
     statusData.value = response.data;
     if (!isUpdatingControl.value) {
         optimizerEnabled.value = statusData.value.optimizer_enabled;
-        // Säkerställ att värdet från API finns i våra options, annars sätt till 0
         if (ampOptions.value.includes(statusData.value.min_override_amps)) {
              selectedMinAmps.value = statusData.value.min_override_amps;
         } else {
@@ -143,7 +216,6 @@ const fetchData = async () => {
              selectedMinAmps.value = 0;
         }
     }
-    console.log("Status data fetched:", statusData.value);
   } catch (err) {
     console.error("Error fetching status data:", err);
     if (err.response) { error.value = `Serverfel ${err.response.status}: ${err.response.data?.detail || err.message}`; }
@@ -154,7 +226,6 @@ const fetchData = async () => {
   }
 };
 
-// --- Update Control Settings Function ---
 const updateControlSettings = async (settings) => {
   if (isUpdatingControl.value) return;
   isUpdatingControl.value = true;
@@ -167,11 +238,10 @@ const updateControlSettings = async (settings) => {
         optimizerEnabled.value = response.data.optimizer_enabled;
     }
     if (response.data.min_override_amps !== undefined) {
-         // Säkerställ att värdet från API finns i våra options
          if (ampOptions.value.includes(response.data.min_override_amps)) {
              selectedMinAmps.value = response.data.min_override_amps;
          } else {
-             selectedMinAmps.value = 0; // Fallback till 0 om API returnerar ogiltigt värde
+             selectedMinAmps.value = 0;
          }
     }
   } catch (err) {
@@ -184,7 +254,6 @@ const updateControlSettings = async (settings) => {
   }
 };
 
-// --- Event Handlers ---
 const toggleOptimizer = () => {
   updateControlSettings({ optimizer_enabled: !optimizerEnabled.value });
 };
@@ -193,18 +262,14 @@ const handleMinAmpsChange = (event) => {
   updateControlSettings({ min_override_amps: newMinAmps });
 };
 
-// --- Lifecycle Hooks ---
 onMounted(() => {
-  console.log("Component mounted. Starting data fetch.");
   fetchData();
   pollingInterval.value = setInterval(fetchData, 10000);
 });
 onUnmounted(() => {
-  console.log("Component unmounted. Clearing interval.");
   if (pollingInterval.value) { clearInterval(pollingInterval.value); }
 });
 
-// --- Formatting Helpers ---
 const formatWatts = (value) => {
   if (value === null || value === undefined) return '-- W';
   if (Math.abs(value) >= 1000) { return `${(value / 1000).toFixed(1)} kW`; }
@@ -227,18 +292,12 @@ const formatDecision = (decision, pending) => {
   return '(ingen ändring)';
 };
 
-// --- Dynamic Styling ---
-const statusColor = (status) => {
-  status = status ? status.toLowerCase() : '';
-  if (status.includes('charging')) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-  if (status.includes('paused')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-  if (status.includes('waiting') || status.includes('ready') || status.includes('connected')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-  if (status.includes('error')) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-};
-
 </script>
 
 <style>
-/* Ensure Tailwind is imported in your main CSS file */
+/* Se till att Tailwind är importerat i din huvudsakliga CSS-fil */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 </style>
