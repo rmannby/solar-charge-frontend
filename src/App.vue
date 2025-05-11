@@ -12,9 +12,7 @@
       <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <TransmissionTowerIcon class="h-8 w-8 text-blue-400" />
           </div>
           <div class="text-sm text-gray-400">Nät</div>
           <div class="text-xl font-semibold">{{ formatWatts(statusData?.net_power_w) }}</div>
@@ -22,11 +20,7 @@
 
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.05 2.05A1 1 0 006.5 19h6a1 1 0 00.95-.684l2.05-2.05A1 1 0 0016.5 16H13z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2.586a1 1 0 01.707.293l1.414 1.414a1 1 0 01.293.707V16H17" />
-            </svg>
+            <CarElectricOutlineIcon class="h-8 w-8 text-green-400" />
           </div>
           <div class="text-sm text-gray-400">Laddning</div>
           <div class="text-xl font-semibold">{{ formatWatts(statusData?.charge_power_w_calculated) }}</div>
@@ -46,9 +40,7 @@
       <div class="grid grid-cols-2 gap-3 mb-6">
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 16v-2m8-8h-2M4 12H2m16.938-4.938l-1.414-1.414M5.482 5.482L4.068 4.068m13.876 13.876l-1.414-1.414M5.482 18.518l-1.414 1.414M12 18a6 6 0 100-12 6 6 0 000 12zm0 0v1a1 1 0 001-1h-1z" />
-            </svg>
+            <EvStationIcon class="h-8 w-8 text-purple-400" />
           </div>
           <div class="text-sm text-gray-400">Satt Ström</div>
           <div class="text-xl font-semibold">{{ formatAmps(statusData?.estimated_set_amps) }}</div>
@@ -56,10 +48,7 @@
 
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.755 4 3.92C16 12.802 14.91 14 12.106 14c-.707 0-1.407-.246-2.01-.668-1.172-.796-2.01-2.018-2.01-3.332 0-.153.01-.303.028-.45z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 11.5c0 1.746 1.343 3.125 3 3.125S10.5 13.246 10.5 11.5c0-1.746-1.343-3.125-3-3.125S4.5 9.754 4.5 11.5zM19.5 11.5c0 1.746-1.343 3.125-3 3.125s-3-1.379-3-3.125c0-1.746 1.343-3.125 3-3.125s3 1.379 3 3.125z" />
-            </svg>
+            <CogsIcon class="h-8 w-8 text-teal-400" />
           </div>
           <div class="text-sm text-gray-400">Beslut</div>
           <div class="text-xl font-semibold">{{ formatDecision(statusData?.decision_amps, statusData?.hysteresis_pending_amps) }}</div>
@@ -123,6 +112,18 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 
+// --- Importera SVG-ikoner som Vue-komponenter ---
+// Assuming these are directly in src/assets/
+import BatteryChargingOutlineIcon from './assets/battery-charging-outline.svg?component';
+import BatteryClockOutlineIcon from './assets/battery-clock-outline.svg?component';
+import PowerPlugBatteryOutlineIcon from './assets/power-plug-battery-outline.svg?component';
+import TransmissionTowerIcon from './assets/transmission-tower.svg?component';
+import CarElectricOutlineIcon from './assets/car-electric-outline.svg?component';
+import EvStationIcon from './assets/ev-station.svg?component';
+// Ny ikon för Beslut
+import CogsIcon from './assets/cogs.svg?component';
+
+
 // --- Reaktiva variabler ---
 const statusData = ref(null);
 const loading = ref(true);
@@ -168,27 +169,32 @@ const topStatusBackgroundClass = computed(() => {
   return 'bg-gray-600';
 });
 
-// --- Ikoner (enkla SVG:er) ---
-const PlugIcon = {
-  template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.472-2.472a3.375 3.375 0 000-4.773L6.263 3.263a3.375 3.375 0 00-4.774 0L1.39 3.375a3.375 3.375 0 000 4.774l2.472 2.472M6.263 3.263l4.748 4.748" /></svg>`
-};
+// --- Befintliga ikoner (som fortfarande används för vissa statusar) ---
 const PauseIcon = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>`
 };
-const HourglassIcon = {
+const HourglassIcon = { // Används för OKÄND, ANSLUTEN och som fallback
   template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l-2.4-4.5m2.4 4.5l-2.4 4.5M6 12c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M6 12l2.4-4.5m-2.4 4.5l2.4 4.5m12-3H4.5" /></svg>`
 };
 const ErrorIcon = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`
 };
 
+// --- Uppdaterad beräknad egenskap för att välja toppstatusikon ---
 const topStatusIcon = computed(() => {
-  if (!statusData.value || !statusData.value.wallbox_status) return HourglassIcon;
+  if (!statusData.value || !statusData.value.wallbox_status) return HourglassIcon; // Fallback för okänd status
   const wbStatus = statusData.value.wallbox_status.toLowerCase();
-  if (wbStatus.includes('charging')) return PlugIcon;
+
+  if (wbStatus.includes('charging')) return BatteryChargingOutlineIcon;
+  if (wbStatus.includes('waiting')) return BatteryClockOutlineIcon;
+  if (wbStatus.includes('ready')) return PowerPlugBatteryOutlineIcon;
   if (wbStatus.includes('paused')) return PauseIcon;
   if (wbStatus.includes('error')) return ErrorIcon;
-  return HourglassIcon;
+  
+  // Fallback för 'ansluten' om ingen specifik ikon finns, eller andra ohanterade statusar
+  if (wbStatus.includes('connected') && !wbStatus.includes('charging')) return HourglassIcon; 
+
+  return HourglassIcon; // Generell fallback
 });
 
 const ampOptions = computed(() => {
@@ -210,10 +216,10 @@ const fetchData = async () => {
     if (!isUpdatingControl.value) {
         optimizerEnabled.value = statusData.value.optimizer_enabled;
         if (ampOptions.value.includes(statusData.value.min_override_amps)) {
-             selectedMinAmps.value = statusData.value.min_override_amps;
+            selectedMinAmps.value = statusData.value.min_override_amps;
         } else {
-             console.warn(`API returned min_override_amps (${statusData.value.min_override_amps}) not in options, defaulting to 0.`);
-             selectedMinAmps.value = 0;
+            console.warn(`API returned min_override_amps (${statusData.value.min_override_amps}) not in options, defaulting to 0.`);
+            selectedMinAmps.value = 0;
         }
     }
   } catch (err) {
@@ -238,17 +244,17 @@ const updateControlSettings = async (settings) => {
         optimizerEnabled.value = response.data.optimizer_enabled;
     }
     if (response.data.min_override_amps !== undefined) {
-         if (ampOptions.value.includes(response.data.min_override_amps)) {
-             selectedMinAmps.value = response.data.min_override_amps;
-         } else {
-             selectedMinAmps.value = 0;
-         }
+        if (ampOptions.value.includes(response.data.min_override_amps)) {
+            selectedMinAmps.value = response.data.min_override_amps;
+        } else {
+            selectedMinAmps.value = 0;
+        }
     }
   } catch (err) {
     console.error("[Control] Error updating settings:", err);
     if (err.response) { controlError.value = `Serverfel ${err.response.status}: ${err.response.data?.detail || err.message}`; }
-    else if (err.request) { controlError.value = 'Ingen kontakt med API:et (kontroll).'; }
-    else { controlError.value = `Klientfel (kontroll): ${err.message}`; }
+    else if (err.request) { error.value = 'Ingen kontakt med API:et (kontroll).'; }
+    else { error.value = `Klientfel (kontroll): ${err.message}`; }
   } finally {
     isUpdatingControl.value = false;
   }
