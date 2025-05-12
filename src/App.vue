@@ -37,7 +37,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="grid grid-cols-3 gap-3 mb-6">
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
             <EvStationIcon class="h-8 w-8 text-purple-400" />
@@ -46,6 +46,13 @@
           <div class="text-xl font-semibold">{{ formatAmps(statusData?.estimated_set_amps) }}</div>
         </div>
 
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <ScaleIcon class="h-8 w-8 text-orange-400" />
+          </div>
+          <div class="text-sm text-gray-400">Tillagd Energi</div>
+          <div class="text-xl font-semibold">{{ formatKwh(statusData?.added_energy_kwh) }}</div>
+        </div>
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
             <CogsIcon class="h-8 w-8 text-teal-400" />
@@ -113,18 +120,19 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 
 // --- Importera SVG-ikoner som Vue-komponenter ---
-// Assuming these are directly in src/assets/
+// Befintliga ikoner
 import BatteryChargingOutlineIcon from './assets/battery-charging-outline.svg?component';
 import BatteryClockOutlineIcon from './assets/battery-clock-outline.svg?component';
 import PowerPlugBatteryOutlineIcon from './assets/power-plug-battery-outline.svg?component';
 import TransmissionTowerIcon from './assets/transmission-tower.svg?component';
 import CarElectricOutlineIcon from './assets/car-electric-outline.svg?component';
 import EvStationIcon from './assets/ev-station.svg?component';
-// Ny ikon för Beslut
 import CogsIcon from './assets/cogs.svg?component';
+// NYTT: Importera ikon för Tillagd Energi (ersätt med din faktiska ikonfil)
+import ScaleIcon from './assets/scale.svg?component'; // Antagande att du har scale.svg
 
 
-// --- Reaktiva variabler ---
+// --- Reaktiva variabler (som tidigare) ---
 const statusData = ref(null);
 const loading = ref(true);
 const error = ref(null);
@@ -134,12 +142,12 @@ const isUpdatingControl = ref(false);
 const optimizerEnabled = ref(true);
 const selectedMinAmps = ref(0);
 
-// --- API Konfiguration ---
+// --- API Konfiguration (som tidigare) ---
 const API_BASE_URL = 'http://192.168.87.53:8000'; // ANVÄND DIN DATORS IP
 const STATUS_API_URL = `${API_BASE_URL}/api/v1/status`;
 const CONTROL_API_URL = `${API_BASE_URL}/api/v1/control`;
 
-// --- Beräknade Värden ---
+// --- Beräknade Värden (som tidigare) ---
 const calculatedSurplus = computed(() => {
   if (statusData.value?.net_power_w !== undefined && statusData.value.net_power_w < 0) {
     return -statusData.value.net_power_w; // Exporterar, så positivt överskott
@@ -169,7 +177,7 @@ const topStatusBackgroundClass = computed(() => {
   return 'bg-gray-600';
 });
 
-// --- Befintliga ikoner (som fortfarande används för vissa statusar) ---
+// --- Befintliga ikoner för toppstatus (som tidigare) ---
 const PauseIcon = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>`
 };
@@ -180,7 +188,7 @@ const ErrorIcon = {
   template: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`
 };
 
-// --- Uppdaterad beräknad egenskap för att välja toppstatusikon ---
+// --- Uppdaterad beräknad egenskap för toppstatusikon (som tidigare) ---
 const topStatusIcon = computed(() => {
   if (!statusData.value || !statusData.value.wallbox_status) return HourglassIcon; // Fallback för okänd status
   const wbStatus = statusData.value.wallbox_status.toLowerCase();
@@ -191,15 +199,15 @@ const topStatusIcon = computed(() => {
   if (wbStatus.includes('paused')) return PauseIcon;
   if (wbStatus.includes('error')) return ErrorIcon;
   
-  // Fallback för 'ansluten' om ingen specifik ikon finns, eller andra ohanterade statusar
   if (wbStatus.includes('connected') && !wbStatus.includes('charging')) return HourglassIcon; 
 
   return HourglassIcon; // Generell fallback
 });
 
+// --- Ampere-alternativ (som tidigare) ---
 const ampOptions = computed(() => {
   const minChargeableAmps = 6;
-  const maxChargeableAmps = 16;
+  const maxChargeableAmps = 16; // Eller hämta från config/API om det varierar
   const options = [0];
   for (let i = minChargeableAmps; i <= maxChargeableAmps; i++) {
     options.push(i);
@@ -207,12 +215,14 @@ const ampOptions = computed(() => {
   return options;
 });
 
+// --- API-anrop (fetchData, updateControlSettings - som tidigare) ---
 const fetchData = async () => {
   if (!statusData.value) { loading.value = true; }
   error.value = null;
   try {
     const response = await axios.get(STATUS_API_URL, { timeout: 10000 });
     statusData.value = response.data;
+    // Uppdatera lokala kontroller endast om vi inte just nu skickar en uppdatering
     if (!isUpdatingControl.value) {
         optimizerEnabled.value = statusData.value.optimizer_enabled;
         if (ampOptions.value.includes(statusData.value.min_override_amps)) {
@@ -240,6 +250,7 @@ const updateControlSettings = async (settings) => {
   try {
     const response = await axios.put(CONTROL_API_URL, settings, { timeout: 15000 });
     console.log("[Control] Update successful:", response.data);
+    // Uppdatera lokala kontroller baserat på API-svaret
     if (response.data.optimizer_enabled !== undefined) {
         optimizerEnabled.value = response.data.optimizer_enabled;
     }
@@ -247,9 +258,12 @@ const updateControlSettings = async (settings) => {
         if (ampOptions.value.includes(response.data.min_override_amps)) {
             selectedMinAmps.value = response.data.min_override_amps;
         } else {
+            // Om API:et returnerar ett oväntat värde (bör inte hända om backend clampar)
             selectedMinAmps.value = 0;
         }
     }
+    // Hämta ny status direkt efter lyckad kontrolluppdatering för snabbare feedback
+    await fetchData();
   } catch (err) {
     console.error("[Control] Error updating settings:", err);
     if (err.response) { controlError.value = `Serverfel ${err.response.status}: ${err.response.data?.detail || err.message}`; }
@@ -260,6 +274,7 @@ const updateControlSettings = async (settings) => {
   }
 };
 
+// --- Event Handlers (som tidigare) ---
 const toggleOptimizer = () => {
   updateControlSettings({ optimizer_enabled: !optimizerEnabled.value });
 };
@@ -268,14 +283,16 @@ const handleMinAmpsChange = (event) => {
   updateControlSettings({ min_override_amps: newMinAmps });
 };
 
+// --- Lifecycle Hooks (som tidigare) ---
 onMounted(() => {
   fetchData();
-  pollingInterval.value = setInterval(fetchData, 10000);
+  pollingInterval.value = setInterval(fetchData, 10000); // Poll var 10e sekund
 });
 onUnmounted(() => {
   if (pollingInterval.value) { clearInterval(pollingInterval.value); }
 });
 
+// --- Formatteringsfunktioner ---
 const formatWatts = (value) => {
   if (value === null || value === undefined) return '-- W';
   if (Math.abs(value) >= 1000) { return `${(value / 1000).toFixed(1)} kW`; }
@@ -285,12 +302,20 @@ const formatAmps = (value) => {
   if (value === null || value === undefined) return '-- A';
   return `${value} A`;
 };
+
+// NYTT: Formatteringsfunktion för kWh
+const formatKwh = (value) => {
+  if (value === null || value === undefined) return '-- kWh';
+  // Visa med en decimal om inte heltal, annars ingen decimal
+  return `${value.toFixed(Number.isInteger(value) ? 0 : 1)} kWh`;
+};
+
 const formatTimestamp = (isoString) => {
   if (!isoString) return '--';
   try {
     const date = new Date(isoString);
     return date.toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  } catch (e) { return isoString; }
+  } catch (e) { return isoString; } // Fallback om datumet är ogiltigt
 };
 const formatDecision = (decision, pending) => {
   if (pending !== null && pending !== undefined) { return `Väntar (${pending} A)...`; }
