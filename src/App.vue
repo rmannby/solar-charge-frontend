@@ -143,7 +143,15 @@ const optimizerEnabled = ref(true);
 const selectedMinAmps = ref(0);
 
 // --- API Konfiguration (som tidigare) ---
-const API_BASE_URL = 'http://192.168.87.53:8000'; // ANVÄND DIN DATORS IP
+// Dynamically determine API URL based on how the frontend is accessed
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  // If accessing via localhost, use localhost for API
+  // If accessing via IP address, use the same IP for API
+  return `http://${hostname}:8000`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const STATUS_API_URL = `${API_BASE_URL}/api/v1/status`;
 const CONTROL_API_URL = `${API_BASE_URL}/api/v1/control`;
 
