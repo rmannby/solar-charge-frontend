@@ -1,6 +1,7 @@
 # Product Requirements Document: SolarCharge Public Web Access
 
 **Author:** Gemini  
+**Owner:** R.Mannby
 **Date:** August 18, 2025  
 **Version:** 1.0
 
