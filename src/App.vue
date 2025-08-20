@@ -117,7 +117,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import axios from 'axios';
+import { api, currentBaseUrl } from './api/client';
 
 // --- Importera SVG-ikoner som Vue-komponenter ---
 // Befintliga ikoner
@@ -142,18 +142,13 @@ const isUpdatingControl = ref(false);
 const optimizerEnabled = ref(true);
 const selectedMinAmps = ref(0);
 
-// --- API Konfiguration (som tidigare) ---
-// Dynamically determine API URL based on how the frontend is accessed
-const getApiBaseUrl = () => {
-  const hostname = window.location.hostname;
-  // If accessing via localhost, use localhost for API
-  // If accessing via IP address, use the same IP for API
-  return `http://${hostname}:8000`;
-};
+// --- API Endpoints ---
+// Using centralized API client from src/api/client.js
+const STATUS_API_PATH = '/api/v1/status';
+const CONTROL_API_PATH = '/api/v1/control';
 
-const API_BASE_URL = getApiBaseUrl();
-const STATUS_API_URL = `${API_BASE_URL}/api/v1/status`;
-const CONTROL_API_URL = `${API_BASE_URL}/api/v1/control`;
+// Log current API base URL for debugging
+console.log('[API] Using base URL:', currentBaseUrl);
 
 // --- Beräknade Värden (som tidigare) ---
 const calculatedSurplus = computed(() => {
@@ -228,7 +223,7 @@ const fetchData = async () => {
   if (!statusData.value) { loading.value = true; }
   error.value = null;
   try {
-    const response = await axios.get(STATUS_API_URL, { timeout: 10000 });
+    const response = await api.get(STATUS_API_PATH);
     statusData.value = response.data;
     // Uppdatera lokala kontroller endast om vi inte just nu skickar en uppdatering
     if (!isUpdatingControl.value) {
@@ -256,7 +251,7 @@ const updateControlSettings = async (settings) => {
   controlError.value = null;
   console.log("[Control] Sending update:", settings);
   try {
-    const response = await axios.put(CONTROL_API_URL, settings, { timeout: 15000 });
+    const response = await api.put(CONTROL_API_PATH, settings);
     console.log("[Control] Update successful:", response.data);
     // Uppdatera lokala kontroller baserat på API-svaret
     if (response.data.optimizer_enabled !== undefined) {

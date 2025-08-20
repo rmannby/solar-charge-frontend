@@ -8,4 +8,7 @@ export default defineConfig({
     vue(),
     svgLoader() // Lägg till svgLoader till dina plugins
   ],
+  // Base path for GitHub Pages deployment
+  // This ensures assets load correctly from https://rmannby.github.io/solar-charge-frontend/
+  base: '/solar-charge-frontend/',
 })

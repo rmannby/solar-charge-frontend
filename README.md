@@ -1,6 +1,28 @@
 # Solar Charge Frontend
 
-A Vue 3 + Vite frontend application with Tailwind CSS for the Solar Charge project.
+A Vue 3 + Vite frontend application with Tailwind CSS for the Solar Charge EV Charging Optimizer.
+
+## 🌐 Public Web Access - Phase 1 (PRD1)
+
+**Status**: Frontend deployed to GitHub Pages, backend integration pending
+
+**Public URL**: https://rmannby.github.io/solar-charge-frontend/ *(Will be available after first deployment)*
+
+**Backend Repository**: [SolarCharge](https://github.com/rmannby/SolarCharge)
+
+### Current State (PRD1)
+- ✅ Frontend hosted on GitHub Pages
+- ✅ Automated deployment via GitHub Actions
+- ✅ Local/LAN access continues to work
+- ⏳ API calls use placeholder `API_BASE_URL_PLACEHOLDER` (will fail on public deployment)
+- ⏳ Backend tunnel setup pending (PRD2)
+- ⏳ Full integration pending (PRD3)
+
+### Development Roadmap
+See the [PRD documentation](./doc/) for the complete three-phase plan:
+1. **PRD1**: Frontend Public Hosting (Current)
+2. **PRD2**: Backend Tunnel Setup (Next)
+3. **PRD3**: Integration & Testing (Final)
 
 ## 🚀 Quick Start
 
@@ -92,6 +114,15 @@ npm run build
 ```
 
 The built files will be in the `dist/` directory.
+
+### GitHub Pages Deployment
+
+The project is configured for automatic deployment to GitHub Pages:
+1. Push changes to the `main` branch
+2. GitHub Actions will automatically build and deploy
+3. Access the site at https://rmannby.github.io/solar-charge-frontend/
+
+**Note**: During PRD1, API calls will fail with `API_BASE_URL_PLACEHOLDER` error - this is expected until PRD2 completion.
 
 ## 👥 Development
 
