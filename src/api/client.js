@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Placeholder: Replace with SOLARCHARGE_BACKEND_HOSTNAME in PRD2 (Meta-PRD Replacement Rule)
-const API_BASE_URL = "API_BASE_URL_PLACEHOLDER";
+// Placeholder: Replace with actual tunnel URL in PRD3 (Meta-PRD Replacement Rule)
+// PRD2: Using SOLARCHARGE_BACKEND_HOSTNAME as a stable placeholder hostname
+const API_BASE_URL = "SOLARCHARGE_BACKEND_HOSTNAME";
 
 /**
  * Check if a hostname is private (localhost, LAN IP, or .local domain)
