@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// Placeholder: Replace with actual tunnel URL in PRD3 (Meta-PRD Replacement Rule)
-// PRD2: Using SOLARCHARGE_BACKEND_HOSTNAME as a stable placeholder hostname
-const API_BASE_URL = "SOLARCHARGE_BACKEND_HOSTNAME";
+// PRD3: Using live Cloudflare Tunnel URL
+const API_BASE_URL = "https://discrete-ratio-when-sense.trycloudflare.com";
 
 /**
  * Check if a hostname is private (localhost, LAN IP, or .local domain)
