@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // PRD3: Using live Cloudflare Tunnel URL
-const API_BASE_URL = "https://discrete-ratio-when-sense.trycloudflare.com";
+const API_BASE_URL = "https://solarcharge-frontend.rm-eltech.info";
 
 /**
  * Check if a hostname is private (localhost, LAN IP, or .local domain)
