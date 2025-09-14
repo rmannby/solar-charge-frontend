@@ -47,7 +47,16 @@ This is a single-page application (SPA) with:
 1. **Real-time Dashboard**: Displays power metrics (grid, charging, surplus) with 10-second polling
 2. **Status Monitoring**: Shows wallbox status with color-coded indicators and icons
 3. **Manual Controls**: Toggle optimizer on/off and set minimum charging amperage
-4. **Error Handling**: Displays API errors and connection issues
+4. **Enhanced Error Reporting**: 
+   - Connection status badges (🟢 Live, 🟡 Cached, 🔴 Offline)
+   - Visual indicators for data freshness
+   - Disabled controls when wallbox is disconnected
+   - Detailed error messages with connection state information
+5. **Connection State Awareness**:
+   - Real-time connection status display
+   - Cache age indicators when using cached data
+   - Automatic control disabling when offline
+   - Visual warnings for rate limiting and transient errors
 
 ### API Integration
 The app dynamically determines the API URL based on the browser's location:
@@ -63,6 +72,21 @@ The application supports access from mobile devices and other machines on the ne
 - **Dynamic API URL**: Automatically detects the access point (localhost vs network IP) and adjusts API calls accordingly
 - **CORS Configuration**: Backend must be configured to allow the frontend's network IP in CORS headers
 - **Mobile Access**: Fully functional on mobile browsers (tested with iPhone/Safari)
+
+#### Enhanced Error Reporting Fields (API v1)
+The status API endpoint (`GET /api/v1/status`) provides these connection status fields:
+- **`wallbox_connected`**: Boolean indicating if wallbox is reachable
+- **`wallbox_client_state`**: Connection state (online/rate_limited/transient_error/offline)
+- **`wallbox_last_error`**: Last error message from wallbox connection
+- **`data_from_cache`**: Boolean indicating if data is from cache
+- **`cache_age_seconds`**: Age of cached data in seconds
+- **`connection_error`**: Boolean flag for connection errors
+
+The frontend uses these fields to:
+- Show connection status badges with appropriate colors
+- Display cache age when using cached data
+- Disable controls when wallbox is disconnected
+- Show detailed error messages to users
 
 ### Vue 3 Patterns Used
 - **Composition API**: All logic uses `<script setup>` syntax
