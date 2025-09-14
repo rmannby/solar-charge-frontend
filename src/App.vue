@@ -1,12 +1,34 @@
 <template>
   <div class="min-h-screen bg-gray-800 text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
     <div class="w-full max-w-sm">
+      <!-- Connection Status Badge -->
+      <div v-if="statusData" class="mb-2 flex justify-center">
+        <div 
+          :class="connectionStatusClass"
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold space-x-1"
+        >
+          <span :class="connectionIndicatorClass" class="w-2 h-2 rounded-full"></span>
+          <span>{{ connectionStatusText }}</span>
+          <span v-if="statusData.data_from_cache && statusData.cache_age_seconds" class="opacity-75">
+            ({{ formatCacheAge(statusData.cache_age_seconds) }})
+          </span>
+        </div>
+      </div>
+
       <div
         :class="topStatusBackgroundClass"
-        class="rounded-lg p-4 mb-6 flex items-center justify-center space-x-3 shadow-lg"
+        class="rounded-lg p-4 mb-6 flex items-center justify-center space-x-3 shadow-lg relative"
       >
         <component :is="topStatusIcon" class="h-8 w-8 text-white" />
         <span class="text-2xl font-bold text-white">{{ topStatusText }}</span>
+        
+        <!-- Data freshness indicator -->
+        <div v-if="statusData?.data_from_cache" class="absolute top-2 right-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" 
+               class="w-5 h-5 text-yellow-300" title="Data från cache">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
       </div>
 
       <div class="grid grid-cols-3 gap-3 mb-3">
@@ -63,11 +85,22 @@
       </div>
 
 
-      <div class="bg-gray-700 p-4 rounded-lg shadow-md">
+      <div class="bg-gray-700 p-4 rounded-lg shadow-md" :class="{ 'opacity-60': !isWallboxConnected }">
         <h2 class="text-lg font-semibold text-center mb-4">Inställningar</h2>
+        
+        <!-- Warning message when wallbox is not connected -->
+        <div v-if="!isWallboxConnected" class="mb-4 p-2 bg-orange-900 bg-opacity-50 rounded-lg border border-orange-600">
+          <div class="flex items-center space-x-2 text-orange-300 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span>{{ wallboxDisconnectedMessage }}</span>
+          </div>
+        </div>
+        
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <label for="optimizerSwitch" class="font-medium">Optimering Aktiv:</label>
+            <label for="optimizerSwitch" class="font-medium" :class="{ 'text-gray-400': !isWallboxConnected }">Optimering Aktiv:</label>
             <button
               id="optimizerSwitch"
               @click="toggleOptimizer"
@@ -75,7 +108,8 @@
               class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500"
               role="switch"
               :aria-checked="optimizerEnabled.toString()"
-              :disabled="isUpdatingControl"
+              :disabled="isUpdatingControl || !isWallboxConnected"
+              :title="!isWallboxConnected ? 'Kontroller inaktiverade - ingen anslutning till wallbox' : ''"
             >
               <span class="sr-only">Aktivera/Inaktivera Optimering</span>
               <span
@@ -87,13 +121,15 @@
           </div>
 
           <div class="flex items-center justify-between">
-            <label for="minAmpsSelect" class="font-medium">Lägsta Laddström:</label>
+            <label for="minAmpsSelect" class="font-medium" :class="{ 'text-gray-400': !isWallboxConnected }">Lägsta Laddström:</label>
             <select
               id="minAmpsSelect"
               v-model="selectedMinAmps"
               @change="handleMinAmpsChange"
-              :disabled="isUpdatingControl"
+              :disabled="isUpdatingControl || !isWallboxConnected"
+              :title="!isWallboxConnected ? 'Kontroller inaktiverade - ingen anslutning till wallbox' : ''"
               class="block w-24 rounded-md border-gray-500 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50 bg-gray-600 text-gray-100 p-1.5 text-sm"
+              :class="{ 'cursor-not-allowed': !isWallboxConnected }"
             >
               <option v-for="amp in ampOptions" :key="amp" :value="amp">
                 {{ `${amp} A` }}
@@ -104,12 +140,26 @@
       </div>
 
       <div v-if="loading && !statusData" class="text-center text-gray-400 mt-4">Laddar data...</div>
-      <div v-if="error" class="text-center text-red-400 mt-4 p-2 bg-red-900 bg-opacity-50 rounded">{{ error }}</div>
+      
+      <!-- Enhanced error display with connection details -->
+      <div v-if="error || wallboxLastError" class="mt-4 space-y-2">
+        <div v-if="error" class="text-center text-red-400 p-2 bg-red-900 bg-opacity-50 rounded">
+          {{ error }}
+        </div>
+        <div v-if="wallboxLastError" class="text-center text-orange-400 p-2 bg-orange-900 bg-opacity-50 rounded">
+          <div class="text-sm font-semibold">Wallbox fel:</div>
+          <div class="text-xs">{{ wallboxLastError }}</div>
+        </div>
+      </div>
+      
       <div v-if="controlError" class="text-center text-orange-400 mt-4 p-2 bg-orange-900 bg-opacity-50 rounded">{{ controlError }}</div>
       <div v-if="isUpdatingControl" class="text-center text-sm text-gray-400 mt-2">Uppdaterar inställning...</div>
 
       <div v-if="statusData" class="text-center text-xs text-gray-500 mt-6">
-        Senast uppdaterad: {{ formatTimestamp(statusData.timestamp) }}
+        <div>Senast uppdaterad: {{ formatTimestamp(statusData.timestamp) }}</div>
+        <div v-if="statusData.data_from_cache && statusData.cache_age_seconds" class="text-yellow-500">
+          (Data från cache - {{ formatCacheAge(statusData.cache_age_seconds) }})
+        </div>
       </div>
     </div>
   </div>
@@ -150,12 +200,87 @@ const CONTROL_API_PATH = '/api/v1/control';
 // Log current API base URL for debugging
 console.log('[API] Using base URL:', currentBaseUrl);
 
-// --- Beräknade Värden (som tidigare) ---
+// --- Beräknade Värden ---
 const calculatedSurplus = computed(() => {
   if (statusData.value?.net_power_w !== undefined && statusData.value.net_power_w < 0) {
     return -statusData.value.net_power_w; // Exporterar, så positivt överskott
   }
   return 0; // Importerar eller noll, så inget överskott
+});
+
+// Connection status computed properties
+const isWallboxConnected = computed(() => {
+  return statusData.value?.wallbox_connected === true;
+});
+
+const wallboxClientState = computed(() => {
+  return statusData.value?.wallbox_client_state || 'unknown';
+});
+
+const wallboxLastError = computed(() => {
+  return statusData.value?.wallbox_last_error || null;
+});
+
+const wallboxDisconnectedMessage = computed(() => {
+  if (wallboxClientState.value === 'offline') {
+    return 'Wallbox är offline - kontroller inaktiverade';
+  } else if (wallboxClientState.value === 'rate_limited') {
+    return 'Wallbox begränsad - för många anrop';
+  } else if (wallboxClientState.value === 'transient_error') {
+    return 'Tillfälligt fel - försöker igen...';
+  }
+  return 'Ingen anslutning till wallbox';
+});
+
+const connectionStatusClass = computed(() => {
+  if (!statusData.value) return 'bg-gray-600 text-gray-300';
+  
+  if (wallboxClientState.value === 'online' && !statusData.value.data_from_cache) {
+    return 'bg-green-900 text-green-300 border border-green-600';
+  } else if (wallboxClientState.value === 'online' && statusData.value.data_from_cache) {
+    return 'bg-yellow-900 text-yellow-300 border border-yellow-600';
+  } else if (wallboxClientState.value === 'rate_limited') {
+    return 'bg-orange-900 text-orange-300 border border-orange-600';
+  } else if (wallboxClientState.value === 'transient_error') {
+    return 'bg-orange-900 text-orange-300 border border-orange-600';
+  } else if (wallboxClientState.value === 'offline') {
+    return 'bg-red-900 text-red-300 border border-red-600';
+  }
+  return 'bg-gray-600 text-gray-300';
+});
+
+const connectionIndicatorClass = computed(() => {
+  if (!statusData.value) return 'bg-gray-400';
+  
+  if (wallboxClientState.value === 'online' && !statusData.value.data_from_cache) {
+    return 'bg-green-400 animate-pulse';
+  } else if (wallboxClientState.value === 'online' && statusData.value.data_from_cache) {
+    return 'bg-yellow-400';
+  } else if (wallboxClientState.value === 'rate_limited') {
+    return 'bg-orange-400';
+  } else if (wallboxClientState.value === 'transient_error') {
+    return 'bg-orange-400 animate-pulse';
+  } else if (wallboxClientState.value === 'offline') {
+    return 'bg-red-400';
+  }
+  return 'bg-gray-400';
+});
+
+const connectionStatusText = computed(() => {
+  if (!statusData.value) return 'Ansluter...';
+  
+  if (wallboxClientState.value === 'online' && !statusData.value.data_from_cache) {
+    return '🟢 Live data';
+  } else if (wallboxClientState.value === 'online' && statusData.value.data_from_cache) {
+    return '🟡 Cachad data';
+  } else if (wallboxClientState.value === 'rate_limited') {
+    return '🟡 Begränsad';
+  } else if (wallboxClientState.value === 'transient_error') {
+    return '🟠 Tillfälligt fel';
+  } else if (wallboxClientState.value === 'offline') {
+    return '🔴 Offline';
+  }
+  return 'Okänd status';
 });
 
 const topStatusText = computed(() => {
@@ -172,8 +297,19 @@ const topStatusText = computed(() => {
 
 const topStatusBackgroundClass = computed(() => {
   if (!statusData.value || !statusData.value.wallbox_status) return 'bg-gray-600';
+  
+  // Override color if wallbox is disconnected or has errors
+  if (!isWallboxConnected.value) {
+    if (wallboxClientState.value === 'offline') return 'bg-red-600';
+    if (wallboxClientState.value === 'rate_limited') return 'bg-orange-600';
+    if (wallboxClientState.value === 'transient_error') return 'bg-orange-500';
+  }
+  
   const wbStatus = statusData.value.wallbox_status.toLowerCase();
-  if (wbStatus.includes('charging')) return 'bg-green-500';
+  if (wbStatus.includes('charging')) {
+    // Show different shade if using cached data while charging
+    return statusData.value.data_from_cache ? 'bg-green-600' : 'bg-green-500';
+  }
   if (wbStatus.includes('paused')) return 'bg-yellow-500';
   if (wbStatus.includes('waiting') || wbStatus.includes('ready') || wbStatus.includes('connected')) return 'bg-blue-500';
   if (wbStatus.includes('error')) return 'bg-red-500';
@@ -306,11 +442,18 @@ const formatAmps = (value) => {
   return `${value} A`;
 };
 
-// NYTT: Formatteringsfunktion för kWh
 const formatKwh = (value) => {
   if (value === null || value === undefined) return '-- kWh';
   // Visa med en decimal om inte heltal, annars ingen decimal
   return `${value.toFixed(Number.isInteger(value) ? 0 : 1)} kWh`;
+};
+
+const formatCacheAge = (seconds) => {
+  if (!seconds || seconds < 1) return 'nyss';
+  if (seconds < 60) return `${Math.floor(seconds)}s gammal`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m gammal`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h gammal`;
+  return `${Math.floor(seconds / 86400)}d gammal`;
 };
 
 const formatTimestamp = (isoString) => {
