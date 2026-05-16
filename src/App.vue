@@ -54,8 +54,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           </div>
-          <div class="text-sm text-gray-400">Överskott</div>
-          <div class="text-xl font-semibold">{{ formatWatts(calculatedSurplus) }}</div>
+          <div class="text-sm text-gray-400">Solproduktion</div>
+          <div class="text-xl font-semibold">{{ formatWatts(statusData?.solar_production_w) }}</div>
         </div>
       </div>
 
@@ -199,14 +199,6 @@ const CONTROL_API_PATH = '/api/v1/control';
 
 // Log current API base URL for debugging
 console.log('[API] Using base URL:', currentBaseUrl);
-
-// --- Beräknade Värden ---
-const calculatedSurplus = computed(() => {
-  if (statusData.value?.net_power_w !== undefined && statusData.value.net_power_w < 0) {
-    return -statusData.value.net_power_w; // Exporterar, så positivt överskott
-  }
-  return 0; // Importerar eller noll, så inget överskott
-});
 
 // Connection status computed properties
 const isWallboxConnected = computed(() => {
