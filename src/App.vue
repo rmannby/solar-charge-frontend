@@ -31,6 +31,7 @@
         </div>
       </div>
 
+      <!-- Rad 1: Nät | Solkraft | Batteri SOC -->
       <div class="grid grid-cols-3 gap-3 mb-3">
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
@@ -42,14 +43,6 @@
 
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <CarElectricOutlineIcon class="h-8 w-8 text-green-400" />
-          </div>
-          <div class="text-sm text-gray-400">Laddning</div>
-          <div class="text-xl font-semibold">{{ formatWatts(statusData?.charge_power_w_calculated) }}</div>
-        </div>
-
-        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
-          <div class="flex justify-center mb-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
@@ -57,15 +50,40 @@
           <div class="text-sm text-gray-400">Solkraft</div>
           <div class="text-xl font-semibold">{{ formatWatts(statusData?.solar_production_w) }}</div>
         </div>
-      </div>
 
-      <div class="grid grid-cols-3 gap-3 mb-6">
+        <!-- Batteri SOC -->
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <EvStationIcon class="h-8 w-8 text-purple-400" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" :class="socIconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="18" height="11" rx="2" stroke-width="2"/>
+              <path d="M20 11h2v3h-2z" stroke-width="1.5"/>
+              <rect x="4" y="9" width="7" height="7" rx="1" :fill="socFillColor" stroke="none"/>
+            </svg>
           </div>
-          <div class="text-sm text-gray-400">Satt Ström</div>
-          <div class="text-xl font-semibold">{{ formatAmps(statusData?.estimated_set_amps) }}</div>
+          <div class="text-sm text-gray-400">Batteri SOC</div>
+          <div class="text-xl font-semibold" :class="socTextColor">{{ formatSoc(statusData?.battery_soc_pct) }}</div>
+        </div>
+      </div>
+
+      <!-- Rad 2: Laddning bil | Batteri-effekt | Tillagd Energi -->
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <CarElectricOutlineIcon class="h-8 w-8 text-green-400" />
+          </div>
+          <div class="text-sm text-gray-400">Laddning</div>
+          <div class="text-xl font-semibold">{{ formatWatts(statusData?.charge_power_w_calculated) }}</div>
+        </div>
+
+        <!-- Batterieffekt -->
+        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
+          <div class="flex justify-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" :class="batteryPowerIconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="text-sm text-gray-400">Batteri</div>
+          <div class="text-xl font-semibold" :class="batteryPowerTextColor">{{ formatBatteryPower(statusData?.battery_power_w) }}</div>
         </div>
 
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
@@ -75,12 +93,15 @@
           <div class="text-sm text-gray-400">Tillagd Energi</div>
           <div class="text-xl font-semibold">{{ formatKwh(statusData?.added_energy_kwh) }}</div>
         </div>
-        <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
-          <div class="flex justify-center mb-1">
-            <CogsIcon class="h-8 w-8 text-teal-400" />
-          </div>
-          <div class="text-sm text-gray-400">Beslut</div>
-          <div class="text-xl font-semibold">{{ formatDecision(statusData?.decision_amps, statusData?.hysteresis_pending_amps) }}</div>
+      </div>
+
+      <!-- SOC-lås-varning -->
+      <div v-if="statusData?.battery_soc_paused" class="mb-3 p-2 bg-blue-900 bg-opacity-60 rounded-lg border border-blue-600">
+        <div class="flex items-center space-x-2 text-blue-300 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <span>Hussbatteri prioriteras — billaddning pausad tills SOC ≥ {{ statusData?.battery_min_soc }}%</span>
         </div>
       </div>
 
@@ -99,6 +120,37 @@
         </div>
         
         <div class="space-y-4">
+
+          <!-- Batteri-prioritet -->
+          <div>
+            <div class="text-sm font-medium mb-2" :class="{ 'text-gray-400': !isWallboxConnected }">Batteri-prioritet:</div>
+            <div class="flex gap-2 mb-2">
+              <button v-for="preset in socPresets" :key="preset.label"
+                @click="applyBatteryPreset(preset.soc)"
+                :disabled="isUpdatingControl || !isWallboxConnected"
+                :class="[
+                  selectedMinSoc === preset.soc ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-300',
+                  'flex-1 px-2 py-1 rounded text-sm font-medium transition-colors',
+                  (isUpdatingControl || !isWallboxConnected) ? 'cursor-not-allowed opacity-50' : 'hover:bg-blue-500 hover:text-white'
+                ]"
+              >{{ preset.label }}</button>
+            </div>
+            <div class="flex items-center justify-between">
+              <label for="minSocSelect" class="text-sm" :class="{ 'text-gray-400': !isWallboxConnected }">Min SOC:</label>
+              <select
+                id="minSocSelect"
+                v-model="selectedMinSoc"
+                @change="handleMinSocChange"
+                :disabled="isUpdatingControl || !isWallboxConnected"
+                class="block w-24 rounded-md border-gray-500 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 bg-gray-600 text-gray-100 p-1.5 text-sm"
+                :class="{ 'cursor-not-allowed': !isWallboxConnected }"
+              >
+                <option v-for="s in socOptions" :key="s" :value="s">{{ s === 0 ? 'Av' : s + ' %' }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-600 pt-4">
           <div class="flex items-center justify-between">
             <label for="optimizerSwitch" class="font-medium" :class="{ 'text-gray-400': !isWallboxConnected }">Optimering Aktiv:</label>
             <button
@@ -136,6 +188,24 @@
               </option>
             </select>
           </div>
+
+          <div class="flex items-center justify-between">
+            <label for="maxAmpsSelect" class="font-medium" :class="{ 'text-gray-400': !isWallboxConnected }">Högsta Laddström:</label>
+            <select
+              id="maxAmpsSelect"
+              v-model="selectedMaxAmps"
+              @change="handleMaxAmpsChange"
+              :disabled="isUpdatingControl || !isWallboxConnected"
+              :title="!isWallboxConnected ? 'Kontroller inaktiverade - ingen anslutning till wallbox' : ''"
+              class="block w-24 rounded-md border-gray-500 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50 bg-gray-600 text-gray-100 p-1.5 text-sm"
+              :class="{ 'cursor-not-allowed': !isWallboxConnected }"
+            >
+              <option v-for="amp in maxAmpOptions" :key="amp" :value="amp">
+                {{ amp === 0 ? 'Ingen gräns' : `${amp} A` }}
+              </option>
+            </select>
+          </div>
+          </div><!-- /border-t -->
         </div>
       </div>
 
@@ -191,6 +261,61 @@ const pollingInterval = ref(null);
 const isUpdatingControl = ref(false);
 const optimizerEnabled = ref(true);
 const selectedMinAmps = ref(0);
+const selectedMinSoc = ref(0);
+const selectedMaxAmps = ref(0);
+
+// SOC-förinställningar
+const socPresets = [
+  { label: 'Av', soc: 0 },
+  { label: 'Balanserat', soc: 70 },
+  { label: 'Huset Först', soc: 90 },
+];
+
+// Dropdown-alternativ för SOC (0 = av, sedan 50-100% i steg om 5)
+const socOptions = [0, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+
+// Dropdown-alternativ för max laddström
+const maxAmpOptions = computed(() => {
+  const options = [0]; // 0 = ingen gräns
+  for (let i = 6; i <= 16; i++) options.push(i);
+  return options;
+});
+
+// SOC-färgkodning
+const socLevel = computed(() => {
+  const s = statusData.value?.battery_soc_pct;
+  if (s === null || s === undefined) return 'unknown';
+  if (s >= 75) return 'high';
+  if (s >= 50) return 'medium';
+  if (s >= 25) return 'low';
+  return 'critical';
+});
+const socIconColor = computed(() => ({
+  'text-green-400': socLevel.value === 'high',
+  'text-yellow-400': socLevel.value === 'medium',
+  'text-orange-400': socLevel.value === 'low',
+  'text-red-400':    socLevel.value === 'critical',
+  'text-gray-500':   socLevel.value === 'unknown',
+}));
+const socFillColor = computed(() => ({
+  high: '#4ade80', medium: '#facc15', low: '#fb923c', critical: '#f87171', unknown: '#6b7280',
+}[socLevel.value]));
+const socTextColor = computed(() => ({
+  'text-green-400': socLevel.value === 'high',
+  'text-yellow-400': socLevel.value === 'medium',
+  'text-orange-400': socLevel.value === 'low',
+  'text-red-400':    socLevel.value === 'critical',
+}));
+
+// Batterieffekt-färgkodning
+const batteryPowerIconColor = computed(() => {
+  const p = statusData.value?.battery_power_w;
+  if (p === null || p === undefined) return 'text-gray-500';
+  if (p > 50) return 'text-orange-400';  // urladdar
+  if (p < -50) return 'text-teal-400';   // laddar
+  return 'text-gray-500';               // vila
+});
+const batteryPowerTextColor = computed(() => batteryPowerIconColor.value);
 
 // --- API Endpoints ---
 // Using centralized API client from src/api/client.js
@@ -359,8 +484,17 @@ const fetchData = async () => {
         if (ampOptions.value.includes(statusData.value.min_override_amps)) {
             selectedMinAmps.value = statusData.value.min_override_amps;
         } else {
-            console.warn(`API returned min_override_amps (${statusData.value.min_override_amps}) not in options, defaulting to 0.`);
             selectedMinAmps.value = 0;
+        }
+        if (socOptions.includes(statusData.value.battery_min_soc)) {
+            selectedMinSoc.value = statusData.value.battery_min_soc;
+        } else {
+            selectedMinSoc.value = 0;
+        }
+        if (maxAmpOptions.value.includes(statusData.value.max_override_amps)) {
+            selectedMaxAmps.value = statusData.value.max_override_amps;
+        } else {
+            selectedMaxAmps.value = 0;
         }
     }
   } catch (err) {
@@ -413,6 +547,18 @@ const handleMinAmpsChange = (event) => {
   const newMinAmps = parseInt(event.target.value, 10);
   updateControlSettings({ min_override_amps: newMinAmps });
 };
+const handleMinSocChange = (event) => {
+  selectedMinSoc.value = parseInt(event.target.value, 10);
+  updateControlSettings({ battery_min_soc: selectedMinSoc.value });
+};
+const handleMaxAmpsChange = (event) => {
+  const newMax = parseInt(event.target.value, 10);
+  updateControlSettings({ max_override_amps: newMax });
+};
+const applyBatteryPreset = (soc) => {
+  selectedMinSoc.value = soc;
+  updateControlSettings({ battery_min_soc: soc });
+};
 
 // --- Lifecycle Hooks (som tidigare) ---
 onMounted(() => {
@@ -459,6 +605,18 @@ const formatDecision = (decision, pending) => {
   if (pending !== null && pending !== undefined) { return `Väntar (${pending} A)...`; }
   if (decision !== null && decision !== undefined) { return `${decision} A`; }
   return '(ingen ändring)';
+};
+const formatSoc = (value) => {
+  if (value === null || value === undefined) return '-- %';
+  return `${value} %`;
+};
+const formatBatteryPower = (value) => {
+  if (value === null || value === undefined) return '-- W';
+  const abs = Math.abs(value);
+  const str = abs >= 1000 ? `${(abs / 1000).toFixed(1)} kW` : `${abs.toFixed(0)} W`;
+  if (value > 50) return `↑ ${str}`;   // urladdar
+  if (value < -50) return `↓ ${str}`;  // laddar
+  return 'Vila';
 };
 
 </script>
