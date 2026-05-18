@@ -308,12 +308,13 @@ const socTextColor = computed(() => ({
 }));
 
 // Batterieffekt-färgkodning
+const BAT_THRESHOLD_W = 200; // Ignorera små underhållspulsar från BMS
 const batteryPowerIconColor = computed(() => {
   const p = statusData.value?.battery_power_w;
   if (p === null || p === undefined) return 'text-gray-500';
-  if (p > 50) return 'text-orange-400';  // urladdar
-  if (p < -50) return 'text-teal-400';   // laddar
-  return 'text-gray-500';               // vila
+  if (p > BAT_THRESHOLD_W) return 'text-orange-400';  // urladdar
+  if (p < -BAT_THRESHOLD_W) return 'text-teal-400';   // laddar
+  return 'text-gray-500';                             // vila/balansering
 });
 const batteryPowerTextColor = computed(() => batteryPowerIconColor.value);
 
@@ -614,8 +615,8 @@ const formatBatteryPower = (value) => {
   if (value === null || value === undefined) return '-- W';
   const abs = Math.abs(value);
   const str = abs >= 1000 ? `${(abs / 1000).toFixed(1)} kW` : `${abs.toFixed(0)} W`;
-  if (value > 50) return `↑ ${str}`;   // urladdar
-  if (value < -50) return `↓ ${str}`;  // laddar
+  if (value > BAT_THRESHOLD_W) return `↑ ${str}`;   // urladdar
+  if (value < -BAT_THRESHOLD_W) return `↓ ${str}`;  // laddar
   return 'Vila';
 };
 
