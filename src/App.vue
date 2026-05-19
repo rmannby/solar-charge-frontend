@@ -51,7 +51,7 @@
           <div class="text-xl font-semibold">{{ formatWatts(statusData?.solar_production_w) }}</div>
         </div>
 
-        <!-- Batteri SOC -->
+        <!-- Batteri SOC + effekt -->
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" :class="socIconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -60,8 +60,9 @@
               <rect x="4" y="9" width="7" height="7" rx="1" :fill="socFillColor" stroke="none"/>
             </svg>
           </div>
-          <div class="text-sm text-gray-400">Batteri SOC</div>
+          <div class="text-sm text-gray-400">Batteri</div>
           <div class="text-xl font-semibold" :class="socTextColor">{{ formatSoc(statusData?.battery_soc_pct) }}</div>
+          <div class="text-xs font-medium mt-0.5" :class="batteryPowerTextColor">{{ formatBatteryPower(statusData?.battery_power_w) }}</div>
         </div>
       </div>
 
@@ -75,15 +76,13 @@
           <div class="text-xl font-semibold">{{ formatWatts(statusData?.charge_power_w_calculated) }}</div>
         </div>
 
-        <!-- Batterieffekt -->
+        <!-- Beslut -->
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
           <div class="flex justify-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" :class="batteryPowerIconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <CogsIcon class="h-8 w-8 text-teal-400" />
           </div>
-          <div class="text-sm text-gray-400">Batteri</div>
-          <div class="text-xl font-semibold" :class="batteryPowerTextColor">{{ formatBatteryPower(statusData?.battery_power_w) }}</div>
+          <div class="text-sm text-gray-400">Beslut</div>
+          <div class="text-xl font-semibold">{{ formatDecision(statusData?.decision_amps, statusData?.hysteresis_pending_amps) }}</div>
         </div>
 
         <div class="bg-gray-700 p-3 rounded-lg shadow-md text-center">
