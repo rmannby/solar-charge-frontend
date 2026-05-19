@@ -44,19 +44,22 @@ This is a single-page application (SPA) with:
 - **Styling**: Tailwind CSS with dark theme (gray-800 background)
 
 ### Key Features
-1. **Real-time Dashboard**: Displays power metrics (grid, charging, surplus) with 10-second polling
-2. **Status Monitoring**: Shows wallbox status with color-coded indicators and icons
-3. **Manual Controls**: Toggle optimizer on/off and set minimum charging amperage
-4. **Enhanced Error Reporting**: 
-   - Connection status badges (🟢 Live, 🟡 Cached, 🔴 Offline)
-   - Visual indicators for data freshness
-   - Disabled controls when wallbox is disconnected
-   - Detailed error messages with connection state information
-5. **Connection State Awareness**:
-   - Real-time connection status display
-   - Cache age indicators when using cached data
-   - Automatic control disabling when offline
-   - Visual warnings for rate limiting and transient errors
+1. **Real-time Dashboard**: Two rows of metric cards with 10-second polling
+   - Row 1 (house): Nät (grid) | Solkraft (PV) | Batteri (SOC % + ↑↓/Vila)
+   - Row 2 (car): Laddning | Beslut ⚙ | Tillagd Energi
+2. **Battery Display**: Color-coded SOC (green→red) with charge direction as subtext. Direction threshold = 200 W to filter BMS balancing pulses.
+3. **SOC Lock Banner**: Shows when `battery_soc_paused=true` explaining why car charging is paused.
+4. **Status Monitoring**: Wallbox status bar with color-coded indicators and icons
+5. **Manual Controls**: Battery priority section + standard controls
+   - Battery priority quick-select: [Av] [Balanserat] [Huset Först] (sets min_soc to 0/70/90 %)
+   - Min SOC dropdown (0 = off, 50–100 % in steps of 5)
+   - Optimizer Aktiv toggle
+   - Lägsta Laddström (min override amps, bypasses SOC lock)
+   - Högsta Laddström (max override amps, reserves solar for house battery)
+6. **Enhanced Error Reporting**:
+   - Connection status badges (🟢 Live, 🟡 Cachad, 🔴 Offline)
+   - Cache age indicators
+   - Disabled controls when wallbox disconnected
 
 ### API Integration
 The app dynamically determines the API URL based on the browser's location:
@@ -73,20 +76,30 @@ The application supports access from mobile devices and other machines on the ne
 - **CORS Configuration**: Backend must be configured to allow the frontend's network IP in CORS headers
 - **Mobile Access**: Fully functional on mobile browsers (tested with iPhone/Safari)
 
-#### Enhanced Error Reporting Fields (API v1)
-The status API endpoint (`GET /api/v1/status`) provides these connection status fields:
-- **`wallbox_connected`**: Boolean indicating if wallbox is reachable
-- **`wallbox_client_state`**: Connection state (online/rate_limited/transient_error/offline)
-- **`wallbox_last_error`**: Last error message from wallbox connection
-- **`data_from_cache`**: Boolean indicating if data is from cache
-- **`cache_age_seconds`**: Age of cached data in seconds
-- **`connection_error`**: Boolean flag for connection errors
+#### Status API fields (GET /api/v1/status)
+Power metrics:
+- **`net_power_w`**: Grid import/export (negative = exporting)
+- **`solar_production_w`**: DC PV production from Solis S6 (W)
+- **`charge_power_w_calculated`**: Current EV charging power (W)
+- **`estimated_set_amps`**: Currently set charging current (A)
+- **`decision_amps`**: Optimizer target amps
 
-The frontend uses these fields to:
-- Show connection status badges with appropriate colors
-- Display cache age when using cached data
-- Disable controls when wallbox is disconnected
-- Show detailed error messages to users
+Battery fields:
+- **`battery_soc_pct`**: House battery state of charge (0–100 %)
+- **`battery_power_w`**: Battery power (positive=discharging, negative=charging)
+- **`battery_soc_paused`**: True when SOC lock is holding car charging paused
+- **`battery_min_soc`**: Currently configured SOC threshold (0 = disabled)
+- **`max_override_amps`**: Currently configured max car charging current
+
+Control settings (also in GET response for UI sync):
+- **`optimizer_enabled`**, **`min_override_amps`**, **`battery_min_soc`**, **`max_override_amps`**
+
+Wallbox connection:
+- **`wallbox_connected`**, **`wallbox_client_state`**, **`wallbox_last_error`**
+- **`data_from_cache`**, **`cache_age_seconds`**, **`connection_error`**
+
+#### Control API (PUT /api/v1/control)
+Accepts any subset of: `optimizer_enabled`, `min_override_amps`, `battery_min_soc`, `max_override_amps`
 
 ### Vue 3 Patterns Used
 - **Composition API**: All logic uses `<script setup>` syntax
